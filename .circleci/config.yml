@@ -1,0 +1,257 @@
+version: 2
+jobs:
+  Critical_Tests_Prod:
+    docker:
+        - image: circleci/python:3.7.4-browsers
+    steps:
+      - checkout
+      - run:
+          name: Update PATH for pipenv and terraform the 'circleci' way
+          command: |
+            echo 'export PATH=${PATH}:${HOME}/.local/bin:${HOME}/project/.circleci' >> $BASH_ENV
+            source $BASH_ENV
+      - run:
+          name: Install Python Packages
+          command: |
+            sudo pip install --upgrade pip
+            sudo pip install pipenv
+            pipenv install --three
+      - run:
+          name: Run "Critical" Tests in "prod" environment
+          command: |
+            pipenv run getbastiontoken
+            pipenv run tunnel
+            pipenv run pytest -m "critical" -v --env "prod" --platform "chrome" --host "saucelabs" --reruns=2
+      - run:
+          name: Move Screenshots so they can be saved as CircleCI artifacts
+          shell: /bin/sh
+          command: |
+            mkdir ./screenshots
+            mv *.png ./screenshots
+            exit 0
+          when: always
+      - store_artifacts:
+          path: ./screenshots
+          destination: /screenshots
+
+  Critical_Tests_Alpha:
+    docker:
+        - image: circleci/python:3.7.4-browsers
+    steps:
+      - checkout
+      - run:
+          name: Update PATH for pipenv and terraform the 'circleci' way
+          command: |
+            echo 'export PATH=${PATH}:${HOME}/.local/bin:${HOME}/project/.circleci' >> $BASH_ENV
+            source $BASH_ENV
+      - run:
+          name: Install Python Packages
+          command: |
+            sudo pip install --upgrade pip
+            sudo pip install pipenv
+            pipenv install --three
+      - run:
+          name: Run "Critical" Tests in "alpha" environment
+          command: |
+            pipenv run getbastiontoken
+            pipenv run tunnel
+            pipenv run pytest -m "critical" -v --env "alpha" --host "saucelabs" --reruns=2 --workers 4 --tests-per-worker 1
+      - run:
+          name: Move Screenshots so they can be saved as CircleCI artifacts
+          shell: /bin/sh
+          command: |
+            mkdir ./screenshots
+            mv *.png ./screenshots
+            exit 0
+          when: always
+      - store_artifacts:
+          path: ./screenshots
+          destination: /screenshots
+
+  Smoke_Tests_Alpha:
+    docker:
+        - image: circleci/python:3.7.4-browsers
+    steps:
+      - checkout
+      - run:
+          name: Update PATH for pipenv and terraform the 'circleci' way
+          command: |
+            echo 'export PATH=${PATH}:${HOME}/.local/bin:${HOME}/project/qa-automation/scripts' >> $BASH_ENV
+            source $BASH_ENV
+      - run:
+          name: Install Python Packages
+          command: |
+            sudo pip install --upgrade pip
+            sudo pip install pipenv
+            pipenv install --three
+      - run:
+          name: Run "Smoke" Tests in "alpha" environment
+          command: |
+            pipenv run getbastiontoken
+            pipenv run tunnel
+            pipenv run pytest -m "smoke" -v --env "alpha" --host "saucelabs" --reruns=2 --workers 4 --tests-per-worker 1
+      - run:
+          name: Move Screenshots so they can be saved as CircleCI artifacts
+          shell: /bin/sh
+          command: |
+            mkdir ./screenshots
+            mv *.png ./screenshots
+            exit 0
+          when: always
+      - store_artifacts:
+          path: ./qa-automation/screenshots
+          destination: /screenshots
+
+  Regression_Tests_Alpha:
+    docker:
+        - image: circleci/python:3.7.4-browsers
+    steps:
+      - checkout
+      - run:
+          name: Update PATH for pipenv and terraform the 'circleci' way
+          command: |
+            echo 'export PATH=${PATH}:${HOME}/.local/bin:${HOME}/project/.circleci' >> $BASH_ENV
+            source $BASH_ENV
+      - run:
+          name: Install Python Packages
+          command: |
+            sudo pip install --upgrade pip
+            sudo pip install pipenv
+            pipenv install --three
+      - run:
+          name: Run "Regression" Tests in "alpha" environment
+          command: |
+            pipenv run getbastiontoken
+            pipenv run tunnel
+            pipenv run pytest -m "regression|smoke|critical" -v --env "alpha" --platform "chrome" --host "saucelabs" --reruns=2 --workers 4 --tests-per-worker 1
+      - run:
+          name: Move Screenshots so they can be saved as CircleCI artifacts
+          shell: /bin/sh
+          command: |
+            mkdir ./screenshots
+            mv *.png ./screenshots
+            exit 0
+          when: always
+      - store_artifacts:
+          path: ./screenshots
+          destination: /screenshots
+
+  Pre_Merge_Tests_Alpha:
+    docker:
+        - image: circleci/python:3.7.4-browsers
+    steps:
+      - checkout
+      - run:
+          name: Update PATH for pipenv and terraform the 'circleci' way
+          command: |
+            echo 'export PATH=${PATH}:${HOME}/.local/bin:${HOME}/project/.circleci' >> $BASH_ENV
+            source $BASH_ENV
+      - run:
+          name: Install Python Packages
+          command: |
+            sudo pip install --upgrade pip
+            sudo pip install pipenv
+            pipenv install --three
+      - run:
+          name: Run "Regression" Tests in "alpha" environment
+          command: |
+            pipenv run getbastiontoken
+            pipenv run tunnel
+            pipenv run pytest -m "regression|smoke|critical" -v --env "alpha" --platform "chrome" --host "local" --reruns=2 --workers 4 --tests-per-worker 1
+      - run:
+          name: Move Screenshots so they can be saved as CircleCI artifacts
+          shell: /bin/sh
+          command: |
+            mkdir ./screenshots
+            mv *.png ./screenshots
+            exit 0
+          when: always
+      - store_artifacts:
+          path: ./screenshots
+          destination: /screenshots
+
+  Automation_Master_Merge_Verification:
+    docker:
+        - image: circleci/python:3.7.4-browsers
+    steps:
+      - checkout
+      - run:
+          name: Update PATH for pipenv and terraform the 'circleci' way
+          command: |
+            echo 'export PATH=${PATH}:${HOME}/.local/bin:${HOME}/project/.circleci' >> $BASH_ENV
+            source $BASH_ENV
+      - run:
+          name: Install Python Packages
+          command: |
+            sudo pip install --upgrade pip
+            sudo pip install pipenv
+            pipenv install --three
+      - run:
+          name: Run "Regression" Tests in "alpha" environment and "Critical" tests in "prod"
+          command: |
+            pipenv run getbastiontoken
+            pipenv run tunnel
+            pipenv run pytest -m "regression|smoke|critical" -v --env "alpha" --platform "chrome" --host "local" --reruns=2 --workers 4 --tests-per-worker 1
+            pipenv run pytest -m "critical" -v --env "prod" --platform "chrome" --host "local" --reruns=2
+      - run:
+          name: Move Screenshots so they can be saved as CircleCI artifacts
+          shell: /bin/sh
+          command: |
+            mkdir ./screenshots
+            mv *.png ./screenshots
+            exit 0
+          when: always
+      - store_artifacts:
+          path: ./screenshots
+          destination: /screenshots
+
+workflows:
+  version: 2
+  master-changed:
+    jobs:
+        - Automation_Master_Merge_Verification:
+            filters:
+                branches:
+                    only:
+                        - master
+  branch-changed:
+    jobs:
+        - Pre_Merge_Tests_Alpha:
+            filters:
+                branches:
+                    ignore:
+                        - master
+
+  critical-prod-monitor:
+    triggers:
+      - schedule:
+          cron: "0,15,30,45 * * * *"
+          filters:
+            branches:
+              only:
+                - master
+    jobs:
+      - Critical_Tests_Prod
+
+  alpha-monitor:
+    triggers:
+      - schedule:
+          cron: "5,20,35,50 * * * *"
+          filters:
+            branches:
+              only:
+                - master
+    jobs:
+      - Critical_Tests_Alpha
+      - Smoke_Tests_Alpha
+
+  nightly-alpha-regression_tests:
+    triggers:
+      - schedule:
+          cron: "0 22 * * * "
+          filters:
+            branches:
+              only:
+                - master
+    jobs:
+      - Regression_Tests_Alpha

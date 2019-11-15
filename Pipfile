@@ -1,0 +1,30 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[requires]
+python_version = "3.7"
+
+[scripts]
+tunnel = "./scripts/tunnel.sh"
+startsauceconnect = "./scripts/startsauceconnect.sh"
+getbastiontoken = "./scripts/setup/getbastiontoken.sh"
+setupsauceconnect = "./scripts/setup/setupsauceconnect.sh"
+installbrowserdrivers = "./scripts/setup/installbrowserdrivers.sh"
+
+[packages]
+selenium = "*"
+pytest = "*"
+awscli = "*"
+requests = "*"
+pysocks = "*"
+pandas = "*"
+psycopg2-binary = "*"
+pytest-parallel = "*"
+pytest-rerunfailures = "*"
+Appium-Python-Client = "*"
+pylint = "*"
+SQLAlchemy = "*"
+
+[dev-packages]
